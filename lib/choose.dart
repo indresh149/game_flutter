@@ -2,11 +2,54 @@ import 'package:flutter/material.dart';
 import 'package:rive/rive.dart';
 import 'package:flame_audio/flame_audio.dart';
 import 'play.dart';
+import 'package:google_mobile_ads/google_mobile_ads.dart';
 
-class ChooseScreen extends StatelessWidget {
+class ChooseScreen extends StatefulWidget {
+  @override
+  State<ChooseScreen> createState() => _ChooseScreenState();
+}
+
+class _ChooseScreenState extends State<ChooseScreen> {
+  bool isBannerLoaded = false;
+
+  late BannerAd bannerAd;
+
+  initializeBannerAd() async {
+    bannerAd = BannerAd(
+      adUnitId: 'ca-app-pub-1123677122450039/3863899755',
+      size: AdSize.banner,
+      request: AdRequest(),
+      listener: BannerAdListener(
+        onAdLoaded: (ad) {
+          setState(() {
+            isBannerLoaded = true;
+          });
+        },
+        onAdFailedToLoad: (ad, error) {
+          ad.dispose();
+          isBannerLoaded = false;
+          print('Ad failed to load with error: $error');
+        },
+      ),
+    );
+    bannerAd.load();
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    initializeBannerAd();
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+       bottomNavigationBar: isBannerLoaded
+          ? Container(
+              height: 100,
+              child: AdWidget(ad: bannerAd),
+            )
+          : null,
       body: Stack(
         fit: StackFit.expand,
         children: [

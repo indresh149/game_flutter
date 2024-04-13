@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:flame_audio/flame_audio.dart';
+import 'package:google_mobile_ads/google_mobile_ads.dart';
 
 class PlayScreen extends StatefulWidget {
   final String userMark;
@@ -22,9 +23,35 @@ class _PlayScreenState extends State<PlayScreen> {
 
   bool _isBotMoving = false; // Flag to check if the bot is currently making a move
 
+  bool isBannerLoaded = false;
+
+  late BannerAd bannerAd;
+
+  initializeBannerAd() async {
+    bannerAd = BannerAd(
+      adUnitId: 'ca-app-pub-1123677122450039/3863899755',
+      size: AdSize.banner,
+      request: AdRequest(),
+      listener: BannerAdListener(
+        onAdLoaded: (ad) {
+          setState(() {
+            isBannerLoaded = true;
+          });
+        },
+        onAdFailedToLoad: (ad, error) {
+          ad.dispose();
+          isBannerLoaded = false;
+          print('Ad failed to load with error: $error');
+        },
+      ),
+    );
+    bannerAd.load();
+  }
+
   @override
   void initState() {
     super.initState();
+     initializeBannerAd();
     // Randomly decide whether the user or the bot plays first
     bool userPlaysFirst = Random().nextBool();
     if (!userPlaysFirst) {
@@ -68,7 +95,16 @@ class _PlayScreenState extends State<PlayScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: null,
+      
+    appBar: isBannerLoaded
+              ? PreferredSize(
+                  preferredSize: Size.fromHeight(100),
+                  child: Container(
+                    height: 100,
+                    child: AdWidget(ad: bannerAd),
+                  ),
+                )
+              : null, 
       body: Stack(
         children: [
           _buildBackground(),
